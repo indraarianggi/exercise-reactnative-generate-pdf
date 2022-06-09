@@ -13,6 +13,7 @@
     "react": "17.0.2",
     "react-native": "0.68.2",
     "react-native-file-viewer": "^2.1.5",
+    "react-native-fs": "^2.20.0",
     "react-native-html-to-pdf": "^0.12.0"
   },
   "devDependencies": {

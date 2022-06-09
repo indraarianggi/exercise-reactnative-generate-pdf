@@ -25,9 +25,10 @@ import RNHTMLtoPDF, {
   Options as RNHTMLtoPDFOptions,
 } from 'react-native-html-to-pdf';
 import FileViewer from 'react-native-file-viewer';
+import RNFS from 'react-native-fs';
 
 const App = () => {
-  const [filePath, setFilePath] = useState('');
+  const [text, setText] = useState('');
 
   const isPermitted = async () => {
     if (Platform.OS === 'android') {
@@ -51,29 +52,37 @@ const App = () => {
   };
 
   const createPDF = async () => {
-    if (await isPermitted()) {
-      let options: RNHTMLtoPDFOptions = {
-        html: '<h1 style="text-align: center;"><strong>Hello Guys</strong></h1><p style="text-align: center;">Here is an example of pdf Print in React Native</p><p style="text-align: center;"><strong>Team About React</strong></p>',
-        fileName: 'test',
-        directory: 'Download',
-      };
+    try {
+      if (await isPermitted()) {
+        let options: RNHTMLtoPDFOptions = {
+          html: '<h1 style="text-align: center;"><strong>Hello Guys</strong></h1><p style="text-align: center;">Here is an example of pdf Print in React Native</p><p style="text-align: center;"><strong>Team About React</strong></p>',
+          fileName: 'test',
+          directory: 'Download',
+        };
 
-      let file = await RNHTMLtoPDF.convert(options);
+        let file = await RNHTMLtoPDF.convert(options);
 
-      console.log(file.filePath);
-      if (file.filePath) {
-        Alert.alert(
-          'Successfully Exported!',
-          'Path:' + file.filePath,
-          [
-            {text: 'Cancel', style: 'cancel'},
-            {text: 'Open', onPress: () => openFile(file.filePath as string)},
-          ],
-          {cancelable: true},
-        );
-      } else {
-        Alert.alert('Export Failed!');
+        /* Move file from cache to Download folder */
+        if (file.filePath) {
+          const destPath = `${RNFS.DownloadDirectoryPath}/test.pdf`;
+          await RNFS.moveFile(file.filePath as string, destPath);
+
+          setText(`FROM: ${file.filePath} | MOVED TO: ${destPath}`);
+
+          Alert.alert(
+            'Successfully Exported and Moved!',
+            'Path: ' + destPath,
+            [
+              {text: 'Cancel', style: 'cancel'},
+              {text: 'Open', onPress: () => openFile(destPath)},
+            ],
+            {cancelable: true},
+          );
+        }
       }
+    } catch (error) {
+      Alert.alert('Failed to generate PDF file');
+      console.log(error);
     }
   };
 
@@ -81,9 +90,11 @@ const App = () => {
     FileViewer.open(filepath)
       .then(() => {
         // success
+        console.log('Success Open File');
       })
       .catch(error => {
         // error
+        console.log({errorOpenFile: error});
       });
   };
 
@@ -104,7 +115,7 @@ const App = () => {
             <Text style={styles.textStyle}>Create PDF</Text>
           </View>
         </TouchableOpacity>
-        <Text style={styles.textStyle}>{filePath}</Text>
+        <Text style={styles.textStyle}>{text}</Text>
       </View>
     </SafeAreaView>
   );
@@ -127,7 +138,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     padding: 10,
     color: 'black',
-    textAlign: 'center',
+    textAlign: 'left',
   },
   imageStyle: {
     width: 150,
