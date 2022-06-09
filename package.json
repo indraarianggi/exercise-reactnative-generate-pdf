@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "react": "17.0.2",
-    "react-native": "0.68.2"
+    "react-native": "0.68.2",
+    "react-native-file-viewer": "^2.1.5",
+    "react-native-html-to-pdf": "^0.12.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
@@ -19,6 +21,7 @@
     "@react-native-community/eslint-config": "^2.0.0",
     "@types/jest": "^26.0.23",
     "@types/react-native": "^0.67.3",
+    "@types/react-native-html-to-pdf": "^0.8.1",
     "@types/react-test-renderer": "^17.0.1",
     "@typescript-eslint/eslint-plugin": "^5.17.0",
     "@typescript-eslint/parser": "^5.17.0",

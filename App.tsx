@@ -8,107 +8,132 @@
  * @format
  */
 
-import React from 'react';
+import React, {useState} from 'react';
 import {
+  Alert,
+  Image,
+  PermissionsAndroid,
+  Platform,
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-const Section: React.FC<{
-  title: string;
-}> = ({children, title}) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+import RNHTMLtoPDF, {
+  Options as RNHTMLtoPDFOptions,
+} from 'react-native-html-to-pdf';
+import FileViewer from 'react-native-file-viewer';
 
 const App = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [filePath, setFilePath] = useState('');
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const isPermitted = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: 'External Storage Write Permission',
+            message: 'App needs access to Storage data',
+            buttonPositive: 'OK',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (error) {
+        Alert.alert('Write permission error', error as string);
+        return false;
+      }
+    } else {
+      return true;
+    }
+  };
+
+  const createPDF = async () => {
+    if (await isPermitted()) {
+      let options: RNHTMLtoPDFOptions = {
+        html: '<h1 style="text-align: center;"><strong>Hello Guys</strong></h1><p style="text-align: center;">Here is an example of pdf Print in React Native</p><p style="text-align: center;"><strong>Team About React</strong></p>',
+        fileName: 'test',
+        directory: 'Download',
+      };
+
+      let file = await RNHTMLtoPDF.convert(options);
+
+      console.log(file.filePath);
+      if (file.filePath) {
+        Alert.alert(
+          'Successfully Exported!',
+          'Path:' + file.filePath,
+          [
+            {text: 'Cancel', style: 'cancel'},
+            {text: 'Open', onPress: () => openFile(file.filePath as string)},
+          ],
+          {cancelable: true},
+        );
+      } else {
+        Alert.alert('Export Failed!');
+      }
+    }
+  };
+
+  const openFile = (filepath: string) => {
+    FileViewer.open(filepath)
+      .then(() => {
+        // success
+      })
+      .catch(error => {
+        // error
+      });
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={{flex: 1}}>
+      <Text style={styles.titleText}>
+        Example to Make PDF in React Native from HTML Text
+      </Text>
+      <View style={styles.container}>
+        <TouchableOpacity onPress={createPDF}>
+          <View>
+            <Image
+              source={{
+                uri: 'https://raw.githubusercontent.com/AboutReact/sampleresource/master/pdf.png',
+              }}
+              style={styles.imageStyle}
+            />
+            <Text style={styles.textStyle}>Create PDF</Text>
+          </View>
+        </TouchableOpacity>
+        <Text style={styles.textStyle}>{filePath}</Text>
+      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: '#fff',
+    alignItems: 'center',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  titleText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    paddingVertical: 20,
   },
-  sectionDescription: {
-    marginTop: 8,
+  textStyle: {
     fontSize: 18,
-    fontWeight: '400',
+    padding: 10,
+    color: 'black',
+    textAlign: 'center',
   },
-  highlight: {
-    fontWeight: '700',
+  imageStyle: {
+    width: 150,
+    height: 150,
+    margin: 5,
+    resizeMode: 'stretch',
   },
 });
 
